@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = 8080;
+const models = require("./models"); /* ./models/index.js */
 
 //json 형식의 데이터를 처리할수 있게 설정
 app.use(express.json());
@@ -11,6 +12,20 @@ app.use(cors());
 //rest API
 //method,경로설정(요청,응답)
 app.get("/products", (req, res) => {
+  models.Product.findAll()
+  .then((result) => {
+    //then = 모드데이터는 비동기식
+    console.log("PRODUCT : ", result);
+    res.send({
+      product: result,
+    });
+  })
+  .catch((error) => {
+    console.error(error);
+    res.send("에러 발생");
+  });
+  
+  /* 
   const query = req.query;
   console.log(query);
 
@@ -40,22 +55,37 @@ app.get("/products", (req, res) => {
       },
     ],
   });
-});
+ */});
 
 app.get("/products/:id/event/:eventId", (req, res) => {
   const params = req.params;
   //const id=params.id;
-  const { id , eventId } = params;
+  const { id, eventId } = params;
   res.send(`id는 ${id}이고 evnetId는 ${eventId}입니다`);
 });
 
 //get은 데이터를 못보냄 받아뿌리기만함
+//상품생성데이터를 데이터베이스에 추가
 app.post("/products", (req, res) => {
   const body = req.body;
   //submit으로 보낸 데이터를 req(요청).body로 받고 그걸 상수 body에 담음
-  console.log(body);
 
-  res.send({ body });
+  //1. 상수 body에 전달받은 값을 구조분해할당
+  const { name, description, price, seller } = body;
+  if (!name || !description || !price || !seller) {
+    res.send("모든 필드를 입력해주세요");
+  }
+  console.log(body);
+  //2. 레코드 생성 (행단위)
+  models.Product.create({ name, description, price, seller })
+    .then((result) => {
+      console.log("상품생성결과:", result);
+      res.send({ result });
+    })
+    .catch((error) => {
+      console.log("error:", error);
+      res.send("상품업로드에 문제가 발생했습니다.");
+    });
 });
 app.post("/login", (req, res) => {
   res.send("로그인이 완료 되었습니다.");
@@ -64,4 +94,34 @@ app.post("/login", (req, res) => {
 //app 실행
 app.listen(port, () => {
   console.log("망고샵의 쇼핑몰 서버가 돌아가고 있습니다. 으르렁왈왈왈🐶🐶");
+  models.sequelize
+    .sync()
+    .then(() => {
+      console.log("😀db연결 성공");
+    })
+    .catch((err) => {
+      console.err(err);
+      console.log("😫db연결 실패");
+      process.exit();
+    });
+  /* sync() 접속 
+    sequelize.sync() db에 필요한 테이블 생성
+    process.exit() 서버종료하는 명령어
+   */
 });
+
+/* sqlite =>mysql을 쉽게 다루게 경량화함
+    ORM => sqlite를 더 쉽게 사용함
+*/
+
+/* 
+  npx sequelize init 을 하면 아래 폴더들이 생성 된다.
+├── ...
+├── config  //sequelize와 연결될 데이터베이스 설정
+│   └── config.json 
+├── models  //데이터베이스 모델링 관련 설정
+│   └── index.js
+├── seeders
+└── migrations
+
+*/
