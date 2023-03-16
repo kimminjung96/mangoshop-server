@@ -2,7 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const port = 8080;
+const port = 8080; //http://127.0.0.1:8080/
 const models = require("./models"); /* ./models/index.js */
 
 //json 형식의 데이터를 처리할수 있게 설정
@@ -12,19 +12,24 @@ app.use(cors());
 //rest API
 //method,경로설정(요청,응답)
 app.get("/products", (req, res) => {
-  models.Product.findAll()
-  .then((result) => {
-    //then = 모드데이터는 비동기식
-    console.log("PRODUCT : ", result);
-    res.send({
-      product: result,
-    });
+  models.Product.findAll({
+    //limit:1,//제한을 거는거(1개만 나옴)
+    //'참조컬럼','ASC'(오름차순) || 'DESC' (내림차순) =>안쓰면 id기준 오름차순
+    order:[['createdAt','DESC']],//정렬기능
+    attributes:["id","name","price","seller","imageUrl","createdAt"]
   })
-  .catch((error) => {
-    console.error(error);
-    res.send("에러 발생");
-  });
-  
+    .then((result) => {
+      //then = 모드데이터는 비동기식
+      console.log("PRODUCT : ", result);
+      res.send({
+        product: result,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.send("에러 발생");
+    });
+
   /* 
   const query = req.query;
   console.log(query);
@@ -55,13 +60,26 @@ app.get("/products", (req, res) => {
       },
     ],
   });
- */});
+ */
+});
 
-app.get("/products/:id/event/:eventId", (req, res) => {
+app.get("/products/:id", (req, res) => {
   const params = req.params;
   //const id=params.id;
-  const { id, eventId } = params;
-  res.send(`id는 ${id}이고 evnetId는 ${eventId}입니다`);
+  //const { id, eventId } = params;
+  const { id } = params;
+  models.Product.findOne({
+    where: { id: id },
+  })
+    .then((result) => {
+      console.log("조회결과 :", result);
+      res.send({
+        product:result
+      })
+    })
+    .catch((error) => {
+      console.log("에러 :", error);
+    }); //findOne 하나만 조회
 });
 
 //get은 데이터를 못보냄 받아뿌리기만함

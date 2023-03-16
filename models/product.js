@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes)=>{
-    /* sequelize.define  sequelize에 정의한다.(테이블정의) */
+    /* sequelize.define  sequelize에 정의한다.(테이블정의) //Product라는 테이블 */
     const product = sequelize.define("Product",{
         /* 이 데이터베이스는 id가 자동으로 생성됌 */
         name:{
