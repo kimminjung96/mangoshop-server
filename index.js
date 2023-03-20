@@ -54,7 +54,7 @@ app.get("/products/:id", function (req, res) {
 
 app.post("/products", function (req, res) {
   const body = req.body;
-  const { name, description, price, seller } = body;
+  const { name, description, price, seller, imageUrl } = body;
   if (!name || !description || !price || !seller) {
     res.send("모든 필드를 입력해주세요");
   }
@@ -63,6 +63,7 @@ app.post("/products", function (req, res) {
     description,
     price,
     seller,
+    imageUrl
   })
     .then((result) => {
       console.log("상품생성결과:", result);
