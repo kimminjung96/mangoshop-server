@@ -19,10 +19,35 @@ app.use(express.json());
 app.use(cors());
 app.use("/uploads", express.static("uploads"));
 
+app.get("/banners", (req, res) => {
+  models.Banner.findAll({
+    //갯수제한
+    limit: 2,
+  })
+    .then((result) => {
+      res.send({
+        banners: result,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      //500번 에러
+      res.status(500).send("에러가 발생했습니다.");
+    });
+});
+
 app.get("/products", function (req, res) {
   models.Product.findAll({
     order: [["createdAt", "DESC"]],
-    attributes: ["id", "name", "price", "seller", "imageUrl", "createdAt"],
+    attributes: [
+      "id",
+      "name",
+      "price",
+      "seller",
+      "imageUrl",
+      "createdAt",
+      "soldout",
+    ],
   })
     .then((result) => {
       res.send({
@@ -63,14 +88,44 @@ app.post("/products", function (req, res) {
     description,
     price,
     seller,
-    imageUrl
+    imageUrl,
   })
     .then((result) => {
       console.log("상품생성결과:", result);
+      res.send({ result });
     })
     .catch((err) => {
       console.error(err);
       res.send("상품업로드에 문제가 발생했습니다");
+    });
+});
+
+//결제하기
+/* api서버는 요청받으면 전달하고 응답함 */
+app.post("/purchase/:id", function (req, res) {
+  /* 전달부분 */
+  const { id } = req.params;
+  //update() 값을변경
+  models.Product.update(
+    {
+      soldout: 1,
+      //1로 바꾼다.
+    },
+    {
+      where: {
+        id,
+        //id값에 있는 것을
+      },
+    }
+  )
+    .then((result) => {
+      res.send({
+        result: true,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).send("에러가 발생했습니다.");
     });
 });
 
