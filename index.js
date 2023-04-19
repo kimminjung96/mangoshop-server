@@ -39,15 +39,7 @@ app.get("/banners", (req, res) => {
 app.get("/products", function (req, res) {
   models.Product.findAll({
     order: [["createdAt", "DESC"]],
-    attributes: [
-      "id",
-      "name",
-      "price",
-      "seller",
-      "imageUrl",
-      "createdAt",
-      "soldout",
-    ],
+    attributes: ["id", "name", "price", "seller", "imageUrl", "createdAt", "soldout"],
   })
     .then((result) => {
       res.send({
@@ -135,6 +127,84 @@ app.post("/image", upload.single("image"), (req, res) => {
   res.send({
     imageUrl: file.path,
   });
+});
+
+/* ************************************************** */
+/* ****************** Todos ************************* */
+//reding
+app.get("/todos", function (req, res) {
+  models.Todo.findAll({
+    order: [["id", "DESC"]],
+    attributes: ["id", "subject", "description", "completed"],
+  })
+    .then((result) => {
+      res.send({
+        todos: result,
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send("에러발생");
+    });
+});
+//create
+app.post("/todos", function (req, res) {
+  const body = req.body;
+  const { subject, description, completed } = body;
+
+  models.Todo.create({
+    subject,
+    description,
+    completed,
+  })
+    .then((result) => {
+      console.log("Product생성결과:", result);
+      res.send({ result });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send("상품업로드에 문제가 발생했습니다");
+    });
+});
+//update
+app.post("/todos/:id", (req, res) => {
+  const { id } = req.params; //한번에 표기
+  models.Todo.findOne({ where: { id } })
+    .then((item) => {
+      const completedValue = item.completed === 0 ? 1 : 0;
+      models.Todo.update(
+        {
+          completed: completedValue,
+        },
+        {
+          where: { id },
+        }
+      )
+        .then(() => {
+          res.send({ result: true });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      return;
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send("에러발생");
+    });
+});
+//delete
+app.delete("/todos/:id", (req, res) => {
+  const { id } = req.params;
+  //models.Todo.destroy()//전체삭제
+  models.Todo.destroy({ where: { id } })
+    .then(() => {
+      res.send("삭제완료");
+    })
+    .catch((err) => {
+      res.status(501).send(err);
+      console.log(err);
+    });
 });
 
 app.listen(port, () => {
